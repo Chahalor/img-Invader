@@ -15,7 +15,9 @@
 //...
 
 /* -----| Constants |----- */
-//...
+
+#define IMORTAL_VERSION "0.0.1"
+#define NB_NEW_IMORTAL 2
 
 /* -----| Macros |----- */
 //...

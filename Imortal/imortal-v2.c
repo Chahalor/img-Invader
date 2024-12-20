@@ -1,8 +1,10 @@
 /* Big Header */
 
-#include "imortal.h"
+// >> gcc -o imortal imortal-v2.c -lX11
 
-// gcc -o imortal imortal->c -lX11
+/* -----| Headers |----- */
+
+#include "imortal.h"
 
 t_imortal	*Init_imortal(void)
 {
@@ -45,11 +47,12 @@ void	check_init(t_imortal *imortal)
 	/** @todo */
 }
 
-void	exiting(t_imortal *imortal)
+int	destroy(t_imortal *imortal)
 {
 	XDestroyWindow(imortal->display, imortal->win);
 	XCloseDisplay(imortal->display);
 	free(imortal);
+	return (1);
 }
 
 void	IM_MOVE_WINDOW(t_imortal *imortal, int x, int y)
@@ -63,16 +66,6 @@ void	KeyPressedHandeler(t_imortal *imortal)
 {
 	KeySym	keysym = XLookupKeysym(&imortal->event.xkey, 0);
 	printf("Key %s pressed\n", XKeysymToString(keysym));
-	if (keysym == XK_Escape)
-		imortal->run = False;
-	else if (keysym == XK_Right)
-		IM_MOVE_WINDOW(imortal, imortal->x_pos + 100, imortal->y_pos);
-	else if (keysym == XK_Left)
-		IM_MOVE_WINDOW(imortal, imortal->x_pos - 100, imortal->y_pos);
-	else if (keysym == XK_Up)
-		IM_MOVE_WINDOW(imortal, imortal->x_pos, imortal->y_pos - 100);
-	else if (keysym == XK_Down)
-		IM_MOVE_WINDOW(imortal, imortal->x_pos, imortal->y_pos + 100);
 }
 
 void	KeyReleasedHandeler(t_imortal *imortal)
@@ -81,33 +74,57 @@ void	KeyReleasedHandeler(t_imortal *imortal)
 	printf("Key %s released\n", XKeysymToString(keysym));
 }
 
-
-int	main(int argc, char *argv[])
+int	day_manager(t_imortal *imortal)
 {
-	t_imortal	*imortal = Init_imortal();
-	check_init(imortal);
-	while (imortal->run)
+	XNextEvent(imortal->display, &imortal->event);
+	switch (imortal->event.type)
 	{
-		XNextEvent(imortal->display, &imortal->event);
-		switch (imortal->event.type)
-		{
-			case ClientMessage:
-				if (imortal->event.xclient.message_type == XInternAtom(imortal->display, "WM_PROTOCOLS", 1) 
+		case ClientMessage:
+			if (imortal->event.xclient.message_type == XInternAtom(imortal->display, "WM_PROTOCOLS", 1) 
 				&& (Atom)imortal->event.xclient.data.l[0] == XInternAtom(imortal->display, "WM_DELETE_WINDOW", 1))
-					imortal->run = False;
-				break;
-			case KeyPress:
-				KeyPressedHandeler(imortal);
-				break;
-			case KeyRelease:
-				KeyReleasedHandeler(imortal);
-				break;
-			case Expose:
-				printf("Expose\n");
-				break;
-			default:
-				break;
+				return (destroy(imortal));
+		break;
+		case DestroyNotify:
+			destroy(imortal);
+			break;
+		case KeyPress:
+			KeyPressedHandeler(imortal);
+			break;
+		case KeyRelease:
+			KeyReleasedHandeler(imortal);
+			break;
+		case Expose:
+			break;
+	}
+}
+
+int	main(int argc, const char *argv[])
+{
+	int	nb_imortal = 0;
+	if (argc > 1)
+		nb_imortal = atoi(argv[1]);
+	else
+		nb_imortal = NB_NEW_IMORTAL;
+	
+	t_imortal	**pantheon = (t_imortal **)calloc(nb_imortal, sizeof(t_imortal *));
+	int	i = 0;
+	while (i < nb_imortal)
+	{
+		pantheon[i] = Init_imortal();
+		i++;
+	}
+	while (True)
+	{
+		i = 0;
+		while (i < nb_imortal)
+		{
+			int action = day_manager(pantheon[i]);
+			if (action == 1)
+			{
+				pantheon[i] = NULL;
+				nb_imortal--;
+			}
+			i++;
 		}
 	}
-	exiting(imortal);
 }
