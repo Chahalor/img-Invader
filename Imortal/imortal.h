@@ -4,12 +4,14 @@
 /* -----| Library |----- */
 
 #include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xatom.h>
 
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+
+#include <pthread.h>
+
 
 /* -----| Headers |----- */
 //...
@@ -18,6 +20,7 @@
 
 #define IMORTAL_VERSION "0.0.1"
 #define NB_NEW_IMORTAL 2
+#define MAX_IMORTAL 100
 
 /* -----| Macros |----- */
 //...
@@ -35,22 +38,24 @@ typedef enum e_error
 
 /* -----| Structs |----- */
 
-typedef struct s_imortal
-{
-	Display *display;
-	Window win;
-	GC gc;
-	XVisualInfo vinfo;
-	XSetWindowAttributes attr;
-	int run;
-	XEvent event;
-	unsigned int	height;
-	unsigned int	width;
-	unsigned int x_pos;
-	unsigned int y_pos;
-}	t_imortal;
+typedef struct s_imortal {
+	Display	*display;
+	Window	window;
+	XEvent	event;
+	Bool	run;
+}			t_imortal;
 
+typedef struct s_pantheon
+{
+	t_imortal		pantheon[MAX_IMORTAL];
+	unsigned int	nb_imortal;
+}					t_pantheon;
 
 
 /* -----| Functions |----- */
-//...
+
+// debug.c
+
+void		print_imortal(t_imortal *him);
+void		print_pantheon(t_pantheon *pantheon);
+

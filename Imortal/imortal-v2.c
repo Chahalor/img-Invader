@@ -1,10 +1,8 @@
 /* Big Header */
 
-// >> gcc -o imortal imortal-v2.c -lX11
-
-/* -----| Headers |----- */
-
 #include "imortal.h"
+
+// gcc -o imortal imortal->c -lX11
 
 t_imortal	*Init_imortal(void)
 {
@@ -44,15 +42,18 @@ t_imortal	*Init_imortal(void)
 /** @todo */
 void	check_init(t_imortal *imortal)
 {
+	(void)imortal;
 	/** @todo */
 }
 
-int	destroy(t_imortal *imortal)
+void	destroy(t_imortal *imortal)
 {
+	if (!imortal)
+		return ;
 	XDestroyWindow(imortal->display, imortal->win);
 	XCloseDisplay(imortal->display);
 	free(imortal);
-	return (1);
+	imortal = NULL;
 }
 
 void	IM_MOVE_WINDOW(t_imortal *imortal, int x, int y)
@@ -66,6 +67,16 @@ void	KeyPressedHandeler(t_imortal *imortal)
 {
 	KeySym	keysym = XLookupKeysym(&imortal->event.xkey, 0);
 	printf("Key %s pressed\n", XKeysymToString(keysym));
+	if (keysym == XK_Escape)
+		imortal->run = False;
+	else if (keysym == XK_Right)
+		IM_MOVE_WINDOW(imortal, imortal->x_pos + 100, imortal->y_pos);
+	else if (keysym == XK_Left)
+		IM_MOVE_WINDOW(imortal, imortal->x_pos - 100, imortal->y_pos);
+	else if (keysym == XK_Up)
+		IM_MOVE_WINDOW(imortal, imortal->x_pos, imortal->y_pos - 100);
+	else if (keysym == XK_Down)
+		IM_MOVE_WINDOW(imortal, imortal->x_pos, imortal->y_pos + 100);
 }
 
 void	KeyReleasedHandeler(t_imortal *imortal)
@@ -74,57 +85,85 @@ void	KeyReleasedHandeler(t_imortal *imortal)
 	printf("Key %s released\n", XKeysymToString(keysym));
 }
 
-int	day_manager(t_imortal *imortal)
-{
-	XNextEvent(imortal->display, &imortal->event);
-	switch (imortal->event.type)
-	{
-		case ClientMessage:
-			if (imortal->event.xclient.message_type == XInternAtom(imortal->display, "WM_PROTOCOLS", 1) 
-				&& (Atom)imortal->event.xclient.data.l[0] == XInternAtom(imortal->display, "WM_DELETE_WINDOW", 1))
-				return (destroy(imortal));
-		break;
-		case DestroyNotify:
-			destroy(imortal);
-			break;
-		case KeyPress:
-			KeyPressedHandeler(imortal);
-			break;
-		case KeyRelease:
-			KeyReleasedHandeler(imortal);
-			break;
-		case Expose:
-			break;
-	}
+void *handle_window(void *arg) {
+    t_imortal *imortal = (t_imortal *)arg;
+    while (imortal->run) {
+        while (XPending(imortal->display)) {
+            XNextEvent(imortal->display, &imortal->event);
+            switch (imortal->event.type) {
+                case ClientMessage:
+                    if (imortal->event.xclient.message_type == XInternAtom(imortal->display, "WM_PROTOCOLS", 1) 
+                    && (Atom)imortal->event.xclient.data.l[0] == XInternAtom(imortal->display, "WM_DELETE_WINDOW", 1))
+                        imortal->run = False;
+                    break;
+                case KeyPress:
+                    // KeyPressedHandeler(imortal);
+                    break;
+                case KeyRelease:
+                    // KeyReleasedHandeler(imortal);
+                    break;
+                case Expose:
+                    printf("Expose\n");
+                    break;
+                case DestroyNotify:
+                    imortal->run = False;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    return NULL;
 }
 
-int	main(int argc, const char *argv[])
+void handle_all_events(t_pantheon *Pantheon) {
+    pthread_t threads[Pantheon->nb_imortal];
+    for (unsigned int i = 0; i < Pantheon->nb_imortal; i++) {
+        t_imortal *imortal = Pantheon->pantheon[i];
+        imortal->run = True;
+        if (pthread_create(&threads[i], NULL, handle_window, (void *)imortal) != 0) {
+            perror("Failed to create thread");
+            exit(EXIT_FAILURE);
+        }
+    }
+    for (unsigned int i = 0; i < Pantheon->nb_imortal; i++) {
+        pthread_join(threads[i], NULL);
+    }
+}
+
+
+int main(int argc, char *argv[])
 {
-	int	nb_imortal = 0;
-	if (argc > 1)
-		nb_imortal = atoi(argv[1]);
-	else
-		nb_imortal = NB_NEW_IMORTAL;
-	
-	t_imortal	**pantheon = (t_imortal **)calloc(nb_imortal, sizeof(t_imortal *));
-	int	i = 0;
-	while (i < nb_imortal)
+	(void)argc; // @todo
+	(void)argv;
+	t_pantheon *Pantheon = (t_pantheon *)calloc(1, sizeof(t_pantheon));
+	if (!Pantheon)
 	{
-		pantheon[i] = Init_imortal();
-		i++;
+		perror("failed to allocate memory for Pantheon");
+		return (EXIT_FAILURE);
 	}
-	while (True)
+	Pantheon->nb_imortal = 0;
+	while (Pantheon->nb_imortal < NB_NEW_IMORTAL)
 	{
-		i = 0;
-		while (i < nb_imortal)
+		Pantheon->pantheon[Pantheon->nb_imortal] = Init_imortal();
+		Pantheon->nb_imortal++;
+	}
+	while (Pantheon->nb_imortal)
+	{
+		printf("Cycle\n");
+		handle_all_events(Pantheon);
+		unsigned int	i = 0;
+		while (i < Pantheon->nb_imortal)
 		{
-			int action = day_manager(pantheon[i]);
-			if (action == 1)
+			if (!Pantheon->pantheon[i]->run)
 			{
-				pantheon[i] = NULL;
-				nb_imortal--;
+				destroy(Pantheon->pantheon[i]);
+				Pantheon->pantheon[i] = NULL;
+				Pantheon->nb_imortal--;
+				new_imortal(Pantheon);
 			}
-			i++;
 		}
 	}
+	free(Pantheon);
+	return 0;
 }

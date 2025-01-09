@@ -42,6 +42,7 @@ t_imortal	*Init_imortal(void)
 /** @todo */
 void	check_init(t_imortal *imortal)
 {
+	(void)imortal;
 	/** @todo */
 }
 
@@ -84,6 +85,8 @@ void	KeyReleasedHandeler(t_imortal *imortal)
 
 int	main(int argc, char *argv[])
 {
+	(void)argc;
+	(void)argv;
 	t_imortal	*imortal = Init_imortal();
 	check_init(imortal);
 	while (imortal->run)
