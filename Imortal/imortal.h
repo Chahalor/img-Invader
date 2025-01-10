@@ -20,6 +20,7 @@
 
 #define IMORTAL_VERSION "0.0.1"
 #define NB_NEW_IMORTAL 2
+#define NUM_IMORTALS 1
 #define MAX_IMORTAL 100
 
 /* -----| Macros |----- */
@@ -43,19 +44,12 @@ typedef struct s_imortal {
 	Window	window;
 	XEvent	event;
 	Bool	run;
+	Atom	wm_delete_window;
+	int		index;
 }			t_imortal;
-
-typedef struct s_pantheon
-{
-	t_imortal		pantheon[MAX_IMORTAL];
-	unsigned int	nb_imortal;
-}					t_pantheon;
-
 
 /* -----| Functions |----- */
 
-// debug.c
+void *handle_window(void *arg);
 
-void		print_imortal(t_imortal *him);
-void		print_pantheon(t_pantheon *pantheon);
 
