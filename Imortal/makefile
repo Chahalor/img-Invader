@@ -2,7 +2,8 @@
 
 NAME = imortal
 
-SRC =	thread_imortal.c #\
+SRC =	hide_imortal.c
+#thread_imortal.c #\
 		debug.c
 
 DIROBJ = .obj
@@ -10,7 +11,7 @@ DIROBJ = .obj
 OBJ = $(addprefix $(DIROBJ)/, $(SRC:.c=.o))
 
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -g3 -I./
+CFLAGS = -g3 -I./
 LDFLAGS = -lX11 #-lSDL2
 
 all: $(NAME)

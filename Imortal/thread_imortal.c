@@ -80,10 +80,9 @@ void	new_window(void *data)
 	XMapWindow(imortal->display, imortal->window);
 	imortal->wm_delete_window = XInternAtom(imortal->display, "WM_DELETE_WINDOW", False);
 	XSetWMProtocols(imortal->display, imortal->window, &imortal->wm_delete_window, 1);
-	
 }
 
-void	init_imortals(t_imortal imortals[MAX_IMORTAL], pthread_t threads[MAX_IMORTAL], int *num_imortals)
+void	init_imortals(t_imortal *imortals, pthread_t *threads, int *num_imortals)
 {
 	int	i = 0;
 
@@ -96,6 +95,15 @@ void	init_imortals(t_imortal imortals[MAX_IMORTAL], pthread_t threads[MAX_IMORTA
 		*num_imortals += 1;
 		i++;
 	}
+}
+
+void	add_imortal(t_imortal imortals[MAX_IMORTAL], pthread_t threads[MAX_IMORTAL], int *num_imortals)
+{
+	imortals[*num_imortals].index = *num_imortals;
+	new_window(&imortals[*num_imortals]);
+	imortals[*num_imortals].run = True;
+	pthread_create(&threads[*num_imortals], NULL, handle_window, &imortals[*num_imortals]);
+	*num_imortals += 1;
 }
 
 void	*handle_window(void *arg)
@@ -126,15 +134,6 @@ void	*handle_window(void *arg)
 	return (NULL);
 }
 
-void	add_imortal(t_imortal imortals[MAX_IMORTAL], pthread_t threads[MAX_IMORTAL], int *num_imortals)
-{
-	imortals[*num_imortals].index = *num_imortals;
-	new_window(&imortals[*num_imortals]);
-	imortals[*num_imortals].run = True;
-	pthread_create(&threads[*num_imortals], NULL, handle_window, &imortals[*num_imortals]);
-	*num_imortals += 1;
-}
-
 int	main(void)
 {
 	t_imortal	imortals[MAX_IMORTAL] = {0};
@@ -154,7 +153,7 @@ int	main(void)
 				imortals[i].run = True;
 				pthread_create(&threads[i], NULL, handle_window, &imortals[i]);
 				int	j = 0;
-				while (j < NB_NEW_IMORTAL)
+				while (j < NB_NEW_IMORTAL && num_imortals < MAX_IMORTAL)
 				{
 					add_imortal(imortals, threads, &num_imortals);
 					j++;

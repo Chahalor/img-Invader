@@ -10,6 +10,9 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <signal.h>
+#include <asm-generic/siginfo.h>
+
 #include <pthread.h>
 
 
@@ -21,7 +24,7 @@
 #define IMORTAL_VERSION "0.0.1"
 #define NB_NEW_IMORTAL 2
 #define NUM_IMORTALS 1
-#define MAX_IMORTAL 100
+#define MAX_IMORTAL 211
 
 /* -----| Macros |----- */
 //...
@@ -43,9 +46,10 @@ typedef struct s_imortal {
 	Display	*display;
 	Window	window;
 	XEvent	event;
-	Bool	run;
 	Atom	wm_delete_window;
 	int		index;
+	Bool	run;
+	Bool	rendering;
 }			t_imortal;
 
 /* -----| Functions |----- */
