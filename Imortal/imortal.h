@@ -23,8 +23,11 @@
 
 #define IMORTAL_VERSION "0.0.1"
 #define NB_NEW_IMORTAL 2
+<<<<<<< HEAD
 #define NUM_IMORTALS 1
 #define MAX_IMORTAL 211
+=======
+>>>>>>> e8e0a55 (tkt)
 
 /* -----| Macros |----- */
 //...
